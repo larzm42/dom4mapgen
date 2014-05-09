@@ -21,3 +21,8 @@ FORMS    += mainwindow.ui
 
 RESOURCES += \
     dom4mapgen.qrc
+
+OTHER_FILES += \
+    ophan.png \
+    ophan.ico \
+    dom4mapgen.rc

@@ -1,3 +1,18 @@
+/* This file is part of dom4mapgen.
+ *
+ * dom4mapgen is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * dom4mapgen is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with dom4mapgen.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QColorDialog>
@@ -346,7 +361,7 @@ void MainWindow::on_generateButton_clicked()
 
 void MainWindow::on_loadSettingsButton_clicked()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Dominions 4 Map Settings"), "", tr("Dominions 4 Exectuable (*.json)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Dominions 4 Map Settings"), "", tr("Settings (*.json)"));
     QFile loadFile(fileName);
 
     if (!loadFile.open(QIODevice::ReadOnly)) {
@@ -410,7 +425,7 @@ void MainWindow::read(const QJsonObject &json)
 
 void MainWindow::on_saveSettingsButton_clicked()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Dominions 4 Map Settings"), "save.json", tr("Dominions 4 Exectuable (*.json)"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Dominions 4 Map Settings"), "save.json", tr("Settings (*.json)"));
 
     QFile saveFile(fileName);
 
