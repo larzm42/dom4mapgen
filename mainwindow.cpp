@@ -21,6 +21,8 @@
 #include <QMessageBox>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QTimer>
+#include <QStandardPaths>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -404,7 +406,8 @@ void MainWindow::on_generateButton_clicked()
          << "--borderwidth" << ui->borderWidthText->text()
          << "--hills" << ui->hillsText->text()
          << "--rugedness" << ui->ruggednessText->text()
-         << "--seasize" << ui->seaSizeText->text();
+         << "--seasize" << ui->seaSizeText->text()
+         << "--textonly";
     if (ui->antiAliasBox->isChecked()) {
         args << "--mapaa";
     }
@@ -428,7 +431,27 @@ void MainWindow::on_generateButton_clicked()
     if (exe.exists() && exe.isExecutable()) {
         myProcess->setWorkingDirectory(exe.absolutePath());
         myProcess->start(program, args);
+        QStringList env = myProcess->systemEnvironment();
+        QStringListIterator iter(env);
+        while (iter.hasNext()) {
+            QString line = iter.next();
+            if (line.startsWith("APPDATA")) {
+                appdata = line.remove(0, 8);
+            }
+        }
 
+        dialog.reset();
+        Qt::WindowFlags flags = dialog.windowFlags();
+        Qt::WindowFlags helpFlag = Qt::WindowContextHelpButtonHint;
+        flags = flags & (~helpFlag);
+        dialog.setWindowFlags(flags);
+        dialog.setModal(true);
+        dialog.setWindowTitle("Generating Map");
+        dialog.setWindowIcon(QIcon(":/ophan.png"));
+        dialog.show();
+
+        counter = 0;
+        QTimer::singleShot(1000, this, SLOT(poll_map_file()));
     } else {
         QMessageBox msgBox(QMessageBox::Warning, tr("Warning"),
                            "Dominions 4 executable can't be run.", 0, this);
@@ -436,6 +459,34 @@ void MainWindow::on_generateButton_clicked()
         msgBox.exec();
     }
 
+}
+
+void MainWindow::poll_map_file()
+{
+    QFileInfo mapFile = QFileInfo(appdata + "/Dominions4/maps/" + ui->mapName->text() + ".rgb");
+    if (mapFile.exists() && mapFile.size() > 0 /*&& isMapValid(mapFile.absoluteFilePath())*/) {
+        dialog.close();
+        QString program = "OpenSeeIt.exe";
+
+        QProcess *myProcess = new QProcess();
+        QFileInfo viewer = QFileInfo(program);
+        if (viewer.exists() && viewer.isExecutable()) {
+            QStringList args;
+            args << QDir::toNativeSeparators(mapFile.absoluteFilePath());
+
+            myProcess->start(program, args);
+        }
+
+    } else {
+        if (!dialog.wasCanceled()) {
+            counter += 2;
+            if (counter > 99) {
+                counter = 0;
+            }
+            dialog.setValue(counter);
+            QTimer::singleShot(1000, this, SLOT(poll_map_file()));
+        }
+    }
 }
 
 void MainWindow::on_loadSettingsButton_clicked()
