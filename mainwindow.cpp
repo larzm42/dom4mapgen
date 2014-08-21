@@ -166,6 +166,32 @@ void MainWindow::on_seaBorderColorButton_clicked()
     }
 }
 
+void MainWindow::on_deepSeaColorButton_clicked()
+{
+    const QColor color = QColorDialog::getColor(QColor(ui->deepSeaColorR->text().toInt(),ui->deepSeaColorG->text().toInt(),ui->deepSeaColorB->text().toInt(),ui->deepSeaColorA->text().toInt()), this, "Select Deep Sea Color", QColorDialog::ShowAlphaChannel);
+    if (color.isValid()) {
+        ui->deepSeaColorLabel->setPalette(QPalette(color));
+        ui->deepSeaColorLabel->setAutoFillBackground(true);
+        ui->deepSeaColorR->setText(QString::number(color.red()));
+        ui->deepSeaColorG->setText(QString::number(color.green()));
+        ui->deepSeaColorB->setText(QString::number(color.blue()));
+        ui->deepSeaColorA->setText(QString::number(color.alpha()));
+    }
+}
+
+void MainWindow::on_coastColorButton_clicked()
+{
+    const QColor color = QColorDialog::getColor(QColor(ui->coastColorR->text().toInt(),ui->coastColorG->text().toInt(),ui->coastColorB->text().toInt(),ui->coastColorA->text().toInt()), this, "Select Coast Color", QColorDialog::ShowAlphaChannel);
+    if (color.isValid()) {
+        ui->coastColorLabel->setPalette(QPalette(color));
+        ui->coastColorLabel->setAutoFillBackground(true);
+        ui->coastColorR->setText(QString::number(color.red()));
+        ui->coastColorG->setText(QString::number(color.green()));
+        ui->coastColorB->setText(QString::number(color.blue()));
+        ui->coastColorA->setText(QString::number(color.alpha()));
+    }
+}
+
 void MainWindow::on_mapNoiseText_textChanged(const QString &arg1)
 {
     ui->mapNoiseSlider->setValue(arg1.toInt());
@@ -292,6 +318,54 @@ void MainWindow::on_seaBorderColorA_textEdited(const QString &arg1)
     on_seaBorderColorR_textEdited(arg1);
 }
 
+void MainWindow::on_deepSeaColorR_textEdited(const QString &arg1)
+{
+    QColor color = QColor(ui->deepSeaColorR->text().toInt(),ui->deepSeaColorG->text().toInt(),ui->deepSeaColorB->text().toInt(),ui->deepSeaColorA->text().toInt());
+    if (color.isValid()) {
+        ui->deepSeaColorLabel->setPalette(QPalette(color));
+        ui->deepSeaColorLabel->setAutoFillBackground(true);
+    }
+}
+
+void MainWindow::on_deepSeaColorG_textEdited(const QString &arg1)
+{
+    on_deepSeaColorR_textEdited(arg1);
+}
+
+void MainWindow::on_deepSeaColorB_textEdited(const QString &arg1)
+{
+    on_deepSeaColorR_textEdited(arg1);
+}
+
+void MainWindow::on_deepSeaColorA_textEdited(const QString &arg1)
+{
+    on_deepSeaColorR_textEdited(arg1);
+}
+
+void MainWindow::on_coastColorR_textEdited(const QString &arg1)
+{
+    QColor color = QColor(ui->coastColorR->text().toInt(),ui->coastColorG->text().toInt(),ui->coastColorB->text().toInt(),ui->coastColorA->text().toInt());
+    if (color.isValid()) {
+        ui->coastColorLabel->setPalette(QPalette(color));
+        ui->coastColorLabel->setAutoFillBackground(true);
+    }
+}
+
+void MainWindow::on_coastColorG_textEdited(const QString &arg1)
+{
+    on_coastColorR_textEdited(arg1);
+}
+
+void MainWindow::on_coastColorB_textEdited(const QString &arg1)
+{
+    on_coastColorR_textEdited(arg1);
+}
+
+void MainWindow::on_coastColorA_textEdited(const QString &arg1)
+{
+    on_coastColorR_textEdited(arg1);
+}
+
 void MainWindow::on_dom4BrowseButton_1_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Dominions 4 Exectuable"), "", tr("Dominions 4 Exectuable (*)"));
@@ -322,8 +396,10 @@ void MainWindow::on_generateButton_clicked()
          << "--mapprov" << ui->numProvincesText->text()
          << "--mapgcol" << ui->groundColorR->text() << ui->groundColorG->text() << ui->groundColorB->text() << ui->groundColorA->text()
          << "--mapscol" << ui->seaColorR->text() << ui->seaColorG->text() << ui->seaColorB->text() << ui->seaColorA->text()
+         << "--mapdscol" << ui->deepSeaColorR->text() << ui->deepSeaColorG->text() << ui->deepSeaColorB->text() << ui->deepSeaColorA->text()
          << "--mapbcol" << ui->groundBorderColorR->text() << ui->groundBorderColorG->text() << ui->groundBorderColorB->text() << ui->groundBorderColorA->text()
          << "--mapsbcol" << ui->seaBorderColorR->text() << ui->seaBorderColorG->text() << ui->seaBorderColorB->text() << ui->seaBorderColorA->text()
+         << "--mapccol" << ui->coastColorR->text() << ui->coastColorG->text() << ui->coastColorB->text() << ui->coastColorA->text()
          << "--mapnoise" << ui->mapNoiseText->text()
          << "--borderwidth" << ui->borderWidthText->text()
          << "--hills" << ui->hillsText->text()
@@ -340,6 +416,9 @@ void MainWindow::on_generateButton_clicked()
     }
     if (!(ui->eastWestWrapBox->isChecked())) {
         args << "--nohwrap";
+    }
+    if (!(ui->impassableBox->isChecked())) {
+        args << "--passmount";
     }
 
     QString program = ui->dom4Text->text();
@@ -377,6 +456,7 @@ void MainWindow::on_loadSettingsButton_clicked()
 
 void MainWindow::read(const QJsonObject &json)
 {
+    ui->dom4Text->setText(json["dom4Text"].toString());
     ui->mapName->setText(json["mapName"].toString());
     ui->riverPartText->setText(json["riverPartText"].toString());
     ui->numProvincesText->setText(json["numProvincesText"].toString());
@@ -402,6 +482,11 @@ void MainWindow::read(const QJsonObject &json)
     ui->seaColorB->setText(json["seaColorB"].toString());
     ui->seaColorA->setText(json["seaColorA"].toString());
     on_seaColorR_textEdited(json["seaColorR"].toString());
+    ui->deepSeaColorR->setText(json["deepSeaColorR"].toString());
+    ui->deepSeaColorG->setText(json["deepSeaColorG"].toString());
+    ui->deepSeaColorB->setText(json["deepSeaColorB"].toString());
+    ui->deepSeaColorA->setText(json["deepSeaColorA"].toString());
+    on_deepSeaColorR_textEdited(json["deepSeaColorR"].toString());
     ui->groundBorderColorR->setText(json["groundBorderColorR"].toString());
     ui->groundBorderColorG->setText(json["groundBorderColorG"].toString());
     ui->groundBorderColorB->setText(json["groundBorderColorB"].toString());
@@ -412,6 +497,11 @@ void MainWindow::read(const QJsonObject &json)
     ui->seaBorderColorB->setText(json["seaBorderColorB"].toString());
     ui->seaBorderColorA->setText(json["seaBorderColorA"].toString());
     on_seaBorderColorR_textEdited(json["seaBorderColorR"].toString());
+    ui->coastColorR->setText(json["coastColorR"].toString());
+    ui->coastColorG->setText(json["coastColorG"].toString());
+    ui->coastColorB->setText(json["coastColorB"].toString());
+    ui->coastColorA->setText(json["coastColorA"].toString());
+    on_coastColorR_textEdited(json["coastColorR"].toString());
     ui->mapNoiseText->setText(json["mapNoiseText"].toString());
     ui->borderWidthText->setText(json["borderWidthText"].toString());
     ui->hillsText->setText(json["hillsText"].toString());
@@ -421,6 +511,7 @@ void MainWindow::read(const QJsonObject &json)
     ui->spritesBox->setChecked(json["spritesBox"].toBool());
     ui->northSouthWrapBox->setChecked(json["northSouthWrapBox"].toBool());
     ui->eastWestWrapBox->setChecked(json["eastWestWrapBox"].toBool());
+    ui->impassableBox->setChecked(json["impassableBox"].toBool());
 }
 
 void MainWindow::on_saveSettingsButton_clicked()
@@ -442,6 +533,7 @@ void MainWindow::on_saveSettingsButton_clicked()
 
 void MainWindow::write(QJsonObject &json) const
 {
+    json["dom4Text"] =  ui->dom4Text->text();
     json["mapName"] = ui->mapName->text();
     json["riverPartText"] = ui->riverPartText->text();
     json["numProvincesText"] = ui->numProvincesText->text();
@@ -462,6 +554,10 @@ void MainWindow::write(QJsonObject &json) const
     json["seaColorG"] = ui->seaColorG->text();
     json["seaColorB"] = ui->seaColorB->text();
     json["seaColorA"] = ui->seaColorA->text();
+    json["deepSeaColorR"] = ui->deepSeaColorR->text();
+    json["deepSeaColorG"] = ui->deepSeaColorG->text();
+    json["deepSeaColorB"] = ui->deepSeaColorB->text();
+    json["deepSeaColorA"] = ui->deepSeaColorA->text();
     json["groundBorderColorR"] = ui->groundBorderColorR->text();
     json["groundBorderColorG"] = ui->groundBorderColorG->text();
     json["groundBorderColorB"] = ui->groundBorderColorB->text();
@@ -470,6 +566,10 @@ void MainWindow::write(QJsonObject &json) const
     json["seaBorderColorG"] = ui->seaBorderColorG->text();
     json["seaBorderColorB"] = ui->seaBorderColorB->text();
     json["seaBorderColorA"] = ui->seaBorderColorA->text();
+    json["coastColorR"] = ui->coastColorR->text();
+    json["coastColorG"] = ui->coastColorG->text();
+    json["coastColorB"] = ui->coastColorB->text();
+    json["coastColorA"] = ui->coastColorA->text();
     json["mapNoiseText"] = ui->mapNoiseText->text();
     json["borderWidthText"] = ui->borderWidthText->text();
     json["hillsText"] = ui->hillsText->text();
@@ -479,5 +579,6 @@ void MainWindow::write(QJsonObject &json) const
     json["spritesBox"] = ui->spritesBox->isChecked();
     json["northSouthWrapBox"] = ui->northSouthWrapBox->isChecked();
     json["eastWestWrapBox"] = ui->eastWestWrapBox->isChecked();
+    json["impassableBox"] = ui->impassableBox->isChecked();
 }
 

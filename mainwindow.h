@@ -123,6 +123,26 @@ private slots:
 
     void on_seaBorderColorA_textEdited(const QString &arg1);
 
+    void on_deepSeaColorButton_clicked();
+
+    void on_coastColorButton_clicked();
+
+    void on_deepSeaColorR_textEdited(const QString &arg1);
+
+    void on_deepSeaColorG_textEdited(const QString &arg1);
+
+    void on_deepSeaColorB_textEdited(const QString &arg1);
+
+    void on_deepSeaColorA_textEdited(const QString &arg1);
+
+    void on_coastColorR_textEdited(const QString &arg1);
+
+    void on_coastColorG_textEdited(const QString &arg1);
+
+    void on_coastColorB_textEdited(const QString &arg1);
+
+    void on_coastColorA_textEdited(const QString &arg1);
+
 private:
     Ui::MainWindow *ui;
     void write(QJsonObject &json) const;
