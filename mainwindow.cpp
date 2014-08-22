@@ -429,8 +429,6 @@ void MainWindow::on_generateButton_clicked()
     QProcess *myProcess = new QProcess();
     QFileInfo exe = QFileInfo(program);
     if (exe.exists() && exe.isExecutable()) {
-        myProcess->setWorkingDirectory(exe.absolutePath());
-        myProcess->start(program, args);
 #ifdef Q_OS_WIN32
         QStringList env = myProcess->systemEnvironment();
         QStringListIterator iter(env);
@@ -444,6 +442,24 @@ void MainWindow::on_generateButton_clicked()
 #ifdef Q_OS_LINUX
         appdata = QDir::homePath();
 #endif
+
+        QFileInfo mapFile = QFileInfo(appdata + "/dominions4/maps/" + ui->mapName->text() + ".rgb");
+        if (mapFile.exists() && mapFile.size() > 0 ) {
+            QMessageBox msgBox(QMessageBox::Warning, tr("Warning"),
+                               "Map file exists. Overwrite?", 0, this);
+            msgBox.addButton(tr("&Yes"), QMessageBox::AcceptRole);
+            msgBox.addButton(tr("&Cancel"), QMessageBox::RejectRole);
+            int ret = msgBox.exec();
+
+            if (ret == QMessageBox::RejectRole) {
+                return;
+            }
+            QFile loadFile(mapFile.absoluteFilePath());
+            loadFile.remove();
+        }
+
+        myProcess->setWorkingDirectory(exe.absolutePath());
+        myProcess->start(program, args);
 
         dialog.reset();
         Qt::WindowFlags flags = dialog.windowFlags();
@@ -484,10 +500,8 @@ void MainWindow::poll_map_file()
         }
 #endif
 #ifdef Q_OS_LINUX
-        QString program = "display";
         QDesktopServices::openUrl(QUrl("file://"+mapFile.absoluteFilePath()));
 #endif
-
 
     } else {
         if (!dialog.wasCanceled()) {
