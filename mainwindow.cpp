@@ -22,7 +22,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QTimer>
-#include <QStandardPaths>
+#include <QDesktopServices>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -431,6 +431,7 @@ void MainWindow::on_generateButton_clicked()
     if (exe.exists() && exe.isExecutable()) {
         myProcess->setWorkingDirectory(exe.absolutePath());
         myProcess->start(program, args);
+#ifdef Q_OS_WIN32
         QStringList env = myProcess->systemEnvironment();
         QStringListIterator iter(env);
         while (iter.hasNext()) {
@@ -439,6 +440,10 @@ void MainWindow::on_generateButton_clicked()
                 appdata = line.remove(0, 8);
             }
         }
+#endif
+#ifdef Q_OS_LINUX
+        appdata = QDir::homePath();
+#endif
 
         dialog.reset();
         Qt::WindowFlags flags = dialog.windowFlags();
@@ -463,9 +468,10 @@ void MainWindow::on_generateButton_clicked()
 
 void MainWindow::poll_map_file()
 {
-    QFileInfo mapFile = QFileInfo(appdata + "/Dominions4/maps/" + ui->mapName->text() + ".rgb");
+    QFileInfo mapFile = QFileInfo(appdata + "/dominions4/maps/" + ui->mapName->text() + ".rgb");
     if (mapFile.exists() && mapFile.size() > 0 /*&& isMapValid(mapFile.absoluteFilePath())*/) {
         dialog.close();
+#ifdef Q_OS_WIN32
         QString program = "OpenSeeIt.exe";
 
         QProcess *myProcess = new QProcess();
@@ -476,6 +482,12 @@ void MainWindow::poll_map_file()
 
             myProcess->start(program, args);
         }
+#endif
+#ifdef Q_OS_LINUX
+        QString program = "display";
+        QDesktopServices::openUrl(QUrl("file://"+mapFile.absoluteFilePath()));
+#endif
+
 
     } else {
         if (!dialog.wasCanceled()) {
