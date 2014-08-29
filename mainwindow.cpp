@@ -28,7 +28,23 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+#ifdef Q_OS_WIN32
+    QStringList env = QProcess::systemEnvironment();
+    QStringListIterator iter(env);
+    while (iter.hasNext()) {
+        QString line = iter.next();
+        if (line.startsWith("APPDATA")) {
+            appdata = line.remove(0, 8);
+        }
+    }
+#endif
+#ifdef Q_OS_LINUX
+    appdata = QDir::homePath();
+#endif
+    appdata.append(QDir::toNativeSeparators("/dominions4"));
+
     ui->setupUi(this);
+    ui->dataDirText->setText(appdata);
 }
 
 MainWindow::~MainWindow()
@@ -371,7 +387,25 @@ void MainWindow::on_coastColorA_textEdited(const QString &arg1)
 void MainWindow::on_dom4BrowseButton_1_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Dominions 4 Exectuable"), "", tr("Dominions 4 Exectuable (*)"));
-    ui->dom4Text->setText(fileName);
+    ui->dom4Text->setText(QDir::toNativeSeparators(fileName));
+}
+
+void MainWindow::on_overrideDataDirBox_clicked()
+{
+    if (ui->overrideDataDirBox->isChecked()){
+        ui->dataDirBrowseButton->setEnabled(true);
+        ui->dataDirText->setEnabled(true);
+    } else {
+        ui->dataDirText->setText(appdata);
+        ui->dataDirBrowseButton->setEnabled(false);
+        ui->dataDirText->setEnabled(false);
+    }
+}
+
+void MainWindow::on_dataDirBrowseButton_clicked()
+{
+    QString fileName = QFileDialog::getExistingDirectory(this, tr("Dominions 4 Data Directory"));
+    ui->dataDirText->setText(QDir::toNativeSeparators(fileName));
 }
 
 void MainWindow::on_generateButton_clicked()
@@ -429,21 +463,13 @@ void MainWindow::on_generateButton_clicked()
     QProcess *myProcess = new QProcess();
     QFileInfo exe = QFileInfo(program);
     if (exe.exists() && exe.isExecutable()) {
-#ifdef Q_OS_WIN32
-        QStringList env = myProcess->systemEnvironment();
-        QStringListIterator iter(env);
-        while (iter.hasNext()) {
-            QString line = iter.next();
-            if (line.startsWith("APPDATA")) {
-                appdata = line.remove(0, 8);
-            }
+        QString appDataDir;
+        if (ui->overrideDataDirBox->isChecked()) {
+            appDataDir = ui->dataDirText->text();
+        } else {
+            appDataDir = appdata;
         }
-#endif
-#ifdef Q_OS_LINUX
-        appdata = QDir::homePath();
-#endif
-
-        QFileInfo mapFile = QFileInfo(appdata + "/dominions4/maps/" + ui->mapName->text() + ".rgb");
+        QFileInfo mapFile = QFileInfo(appDataDir + "/maps/" + ui->mapName->text() + ".rgb");
         if (mapFile.exists() && mapFile.size() > 0 ) {
             QMessageBox msgBox(QMessageBox::Warning, tr("Warning"),
                                "Map file exists. Overwrite?", 0, this);
@@ -484,24 +510,32 @@ void MainWindow::on_generateButton_clicked()
 
 void MainWindow::poll_map_file()
 {
-    QFileInfo mapFile = QFileInfo(appdata + "/dominions4/maps/" + ui->mapName->text() + ".rgb");
-    if (mapFile.exists() && mapFile.size() > 0 /*&& isMapValid(mapFile.absoluteFilePath())*/) {
+    QString appDataDir;
+    if (ui->overrideDataDirBox->isChecked()) {
+        appDataDir = ui->dataDirText->text();
+    } else {
+        appDataDir = appdata;
+    }
+    QFileInfo mapFile = QFileInfo(appDataDir + "/maps/" + ui->mapName->text() + ".rgb");
+    if (mapFile.exists() && mapFile.size() > 0 ) {
         dialog.close();
+        if (ui->previewBox->isChecked()) {
 #ifdef Q_OS_WIN32
-        QString program = "OpenSeeIt.exe";
+            QString program = "OpenSeeIt.exe";
 
-        QProcess *myProcess = new QProcess();
-        QFileInfo viewer = QFileInfo(program);
-        if (viewer.exists() && viewer.isExecutable()) {
-            QStringList args;
-            args << QDir::toNativeSeparators(mapFile.absoluteFilePath());
+            QProcess *myProcess = new QProcess();
+            QFileInfo viewer = QFileInfo(program);
+            if (viewer.exists() && viewer.isExecutable()) {
+                QStringList args;
+                args << QDir::toNativeSeparators(mapFile.absoluteFilePath());
 
-            myProcess->start(program, args);
-        }
+                myProcess->start(program, args);
+            }
 #endif
 #ifdef Q_OS_LINUX
-        QDesktopServices::openUrl(QUrl("file://"+mapFile.absoluteFilePath()));
+            QDesktopServices::openUrl(QUrl("file://"+mapFile.absoluteFilePath()));
 #endif
+        }
 
     } else {
         if (!dialog.wasCanceled()) {
@@ -534,6 +568,9 @@ void MainWindow::on_loadSettingsButton_clicked()
 void MainWindow::read(const QJsonObject &json)
 {
     ui->dom4Text->setText(json["dom4Text"].toString());
+    ui->dataDirText->setText(json["dataDirText"].toString());
+    ui->overrideDataDirBox->setChecked(json["overrideDataDirBox"].toBool());
+    on_overrideDataDirBox_clicked();
     ui->mapName->setText(json["mapName"].toString());
     ui->riverPartText->setText(json["riverPartText"].toString());
     ui->numProvincesText->setText(json["numProvincesText"].toString());
@@ -589,6 +626,7 @@ void MainWindow::read(const QJsonObject &json)
     ui->northSouthWrapBox->setChecked(json["northSouthWrapBox"].toBool());
     ui->eastWestWrapBox->setChecked(json["eastWestWrapBox"].toBool());
     ui->impassableBox->setChecked(json["impassableBox"].toBool());
+    ui->previewBox->setChecked(json["previewBox"].toBool());
 }
 
 void MainWindow::on_saveSettingsButton_clicked()
@@ -612,6 +650,8 @@ void MainWindow::write(QJsonObject &json) const
 {
     json["dom4Text"] =  ui->dom4Text->text();
     json["mapName"] = ui->mapName->text();
+    json["dataDirText"] = ui->dataDirText->text();
+    json["overrideDataDirBox"] = ui->overrideDataDirBox->isChecked();
     json["riverPartText"] = ui->riverPartText->text();
     json["numProvincesText"] = ui->numProvincesText->text();
     json["seaPartText"] = ui->seaPartText->text();
@@ -657,5 +697,7 @@ void MainWindow::write(QJsonObject &json) const
     json["northSouthWrapBox"] = ui->northSouthWrapBox->isChecked();
     json["eastWestWrapBox"] = ui->eastWestWrapBox->isChecked();
     json["impassableBox"] = ui->impassableBox->isChecked();
+    json["previewBox"] = ui->previewBox->isChecked();
 }
+
 

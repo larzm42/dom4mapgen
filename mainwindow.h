@@ -89,6 +89,8 @@ private slots:
     void on_coastColorB_textEdited(const QString &arg1);
     void on_coastColorA_textEdited(const QString &arg1);
     void poll_map_file();
+    void on_overrideDataDirBox_clicked();
+    void on_dataDirBrowseButton_clicked();
 
 private:
     Ui::MainWindow *ui;
